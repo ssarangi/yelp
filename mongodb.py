@@ -4,11 +4,18 @@ import pandas as pd
 from pymongo import MongoClient
 
 class Query:
-    def __init__(self, arg):
-        pass
+    def __init__(self, parent_query = None, arg = ""):
+        self.parent_query = parent_query
+        self.arg = ""
 
     def filter(self, arg):
-        return Query()
+        return Query(self, arg)
+
+    def __str__(self):
+        final_str = ""
+        if (self.parent_query != None):
+            final_str = str(self.parent_query)
+        final_str += "__" + self.arg
 
 class Collection:
     def __init__(self, db_obj, name, parent_name=""):
@@ -43,6 +50,9 @@ class Collection:
 
         return df
 
+    def query(self):
+        return Query()
+
 class MongoDBHelper:
     def __init__(self, db, host='localhost', port=27017, username=None, password=None, no_id=True):
         # Connect to MongoDB
@@ -71,4 +81,5 @@ class MongoDBHelper:
 
 if __name__ == "__main__":
     mongo_helper = MongoDBHelper('yelp')
-    print(dir(mongo_helper.users))
+    query = mongo_helper.users.query().filter("average_rating > 2").filter("votes.funny > 2")
+    print(query)
