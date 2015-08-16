@@ -4,18 +4,60 @@ import pandas as pd
 from pymongo import MongoClient
 
 class Query:
-    def __init__(self, parent_query = None, arg = ""):
-        self.parent_query = parent_query
-        self.arg = ""
+    def __init__(self):
+        self._query_dict = {}
+        self._count = False
 
-    def filter(self, arg):
-        return Query(self, arg)
+    def _is_op(self, param):
+        ops = ["lt"
+               "gt",
+               "lte",
+               "gte",
+               "ne"]
+
+        if (any(param in i for i in ops)):
+            return True
+
+        return False
+
+    def _parse_key(self, key):
+        params = key.split("__")
+        return params
+
+
+    def filter(self, **kwargs):
+        # Iterate over the kw args and create the search dictionary
+        for k,v in kwargs.items():
+            # Parse the key and figure out if there is an operation
+            keys = self._parse_key(k)
+            last_param = keys[len(keys) - 1]
+
+            # See how many params we need to add
+            if (self._is_op(last_param)):
+                keys = keys[:-1]
+
+            key_str = ".".join(keys)
+
+            if (self._is_op(last_param)):
+               last_param = "$" + last_param
+               self._query_dict.update({key_str: {last_param: v}})
+            else:
+                self._query_dict.update({key_str: v})
+
+        return self
+
+    def count(self):
+        self._count = True
+        return self
+
+    def is_count(self):
+        return self._count
+
+    def get_query(self):
+        return self._query_dict
 
     def __str__(self):
-        final_str = ""
-        if (self.parent_query != None):
-            final_str = str(self.parent_query)
-        final_str += "__" + self.arg
+        return str(self.query_dict)
 
 class Collection:
     def __init__(self, db_obj, name, parent_name=""):
@@ -53,6 +95,17 @@ class Collection:
     def query(self):
         return Query()
 
+    def execute_query(self, query):
+        cursor = None
+        if (query.is_count()):
+            count = self.db[self._collection_name].find(query.get_query()).count()
+            return count
+        else:
+            cursor = self.db[self._collection_name].find(query.get_query())
+            return list(cursor)
+
+        return None
+
 class MongoDBHelper:
     def __init__(self, db, host='localhost', port=27017, username=None, password=None, no_id=True):
         # Connect to MongoDB
@@ -81,5 +134,5 @@ class MongoDBHelper:
 
 if __name__ == "__main__":
     mongo_helper = MongoDBHelper('yelp')
-    query = mongo_helper.users.query().filter("average_rating > 2").filter("votes.funny > 2")
-    print(query)
+    query = mongo_helper.users.query().filter(average_stars__gt = 2).filter(votes__funny__gt = 2).count()
+    print(mongo_helper.users.execute_query(query))
