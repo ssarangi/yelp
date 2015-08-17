@@ -130,9 +130,3 @@ class MongoDBHelper:
 
     def collections(self):
         return self.db.collection_names(include_system_collections=False)
-
-
-if __name__ == "__main__":
-    mongo_helper = MongoDBHelper('yelp')
-    query = mongo_helper.users.query().filter(average_stars__gt = 2).filter(votes__funny__gt = 2)
-    print(mongo_helper.users.execute_query(query).dataframe())
