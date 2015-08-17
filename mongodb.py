@@ -69,7 +69,7 @@ class Query:
         return self._projection
 
     def __str__(self):
-        return str(self.query_dict)
+        return str(self._query_dict)
 
 class Collection:
     def __init__(self, db_obj, name, parent_name=""):
@@ -114,7 +114,10 @@ class Collection:
         if (query.is_count()):
             self._count = self.db[self._collection_name].find(query.get_query()).count()
         else:
-            self._cursor = self.db[self._collection_name].find(query.get_query(), query.get_projection())
+            if len(query.get_projection()) > 0:
+                self._cursor = self.db[self._collection_name].find(query.get_query(), query.get_projection())
+            else:
+                self._cursor = self.db[self._collection_name].find(query.get_query())
 
         return self
 
