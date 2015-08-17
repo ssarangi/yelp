@@ -4,10 +4,13 @@ import pandas as pd
 from pymongo import MongoClient
 
 class Query:
-    def __init__(self):
+    def __init__(self, db, collection):
         self._query_dict = {}
         self._count = False
         self._projection = {}
+        self._db = db
+        self._collection = collection
+        self._value = None
 
     def _is_op(self, param):
         ops = ["lt"
@@ -59,41 +62,22 @@ class Query:
         self._count = True
         return self
 
-    def is_count(self):
-        return self._count
-
-    def get_query(self):
-        return self._query_dict
-
-    def get_projection(self):
-        return self._projection
-
-    def __str__(self):
-        return str(self._query_dict)
-
-class Collection:
-    def __init__(self, db_obj, name, parent_name=""):
-        self._collection_name = name
-        self.db = db_obj
-        self._cursor = None
-        self._count = 0
-
-        find_one = self.db[self._collection_name].find_one()
-
-        if (find_one != None):
-            collection_list = find_one.keys()
-            for collection in collection_list:
-                print("Creating Collection: %s" % parent_name + "." + collection)
-                setattr(self, collection, Collection(self.db, collection, self._collection_name))
-
-    def _query(self, query_dict={}):
-        cursor = None
-        if bool(query_dict):
-            cursor = self.db[self._collection_name].find()
+    def execute(self):
+        if (self._count):
+            self._count = self._db[self._collection].find(self._query_dict).count()
+            self._value = self._count
         else:
-            cursor = self.db[self._collection_name].find(query_dict)
+            if len(self._query._projection) > 0:
+                self._cursor = self._db[self._collection].find(self._query_dict, self._projection)
+                self._value = self._cursor
+            else:
+                self._cursor = self._db[self._collection].find(self._query_dict)
+                self._value = self._cursor
 
-        return cursor
+        return self
+
+    def get(self):
+        return self._value
 
     def dataframe(self, no_id=True):
         # Expand the cursor and construct the dataframe
@@ -102,24 +86,29 @@ class Collection:
         if (no_id):
             del df['_id']
 
+        self._value = df
         return df
 
-    def count(self):
-        return self._count
+    def __str__(self):
+        return str(self._query_dict)
+
+class Collection:
+    def __init__(self, db_obj, name, parent_name=""):
+        self._collection_name = name
+        self._db = db_obj
+        self._cursor = None
+        self._count = 0
+
+        find_one = self._db[self._collection_name].find_one()
+
+        if (find_one != None):
+            collection_list = find_one.keys()
+            for collection in collection_list:
+                print("Creating Collection: %s" % parent_name + "." + collection)
+                setattr(self, collection, Collection(self._db, collection, self._collection_name))
 
     def query(self):
-        return Query()
-
-    def execute_query(self, query):
-        if (query.is_count()):
-            self._count = self.db[self._collection_name].find(query.get_query()).count()
-        else:
-            if len(query.get_projection()) > 0:
-                self._cursor = self.db[self._collection_name].find(query.get_query(), query.get_projection())
-            else:
-                self._cursor = self.db[self._collection_name].find(query.get_query())
-
-        return self
+        return Query(self._db, self._collection_name)
 
 class MongoDBHelper:
     def __init__(self, db, host='localhost', port=27017, username=None, password=None, no_id=True):
