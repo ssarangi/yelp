@@ -17,7 +17,8 @@ class Query:
                "ne",
                "exists",
                "regex",
-               "in"]
+               "in",
+               "all"]
 
         if (any(param in i for i in ops)):
             return True
