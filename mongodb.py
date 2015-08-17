@@ -63,6 +63,8 @@ class Collection:
     def __init__(self, db_obj, name, parent_name=""):
         self._collection_name = name
         self.db = db_obj
+        self._cursor = None
+        self._count = 0
 
         find_one = self.db[self._collection_name].find_one()
 
@@ -81,30 +83,28 @@ class Collection:
 
         return cursor
 
-    def to_dataframe(self, query_dict={}, no_id=True):
-        cursor = self._query(query_dict)
-
+    def dataframe(self, no_id=True):
         # Expand the cursor and construct the dataframe
-        df = pd.DataFrame(list(cursor))
+        df = pd.DataFrame(list(self._cursor))
 
         if (no_id):
             del df['_id']
 
         return df
 
+    def count(self):
+        return self._count
+
     def query(self):
         return Query()
 
     def execute_query(self, query):
-        cursor = None
         if (query.is_count()):
-            count = self.db[self._collection_name].find(query.get_query()).count()
-            return count
+            self._count = self.db[self._collection_name].find(query.get_query()).count()
         else:
-            cursor = self.db[self._collection_name].find(query.get_query())
-            return list(cursor)
+            self._cursor = self.db[self._collection_name].find(query.get_query())
 
-        return None
+        return self
 
 class MongoDBHelper:
     def __init__(self, db, host='localhost', port=27017, username=None, password=None, no_id=True):
@@ -134,5 +134,5 @@ class MongoDBHelper:
 
 if __name__ == "__main__":
     mongo_helper = MongoDBHelper('yelp')
-    query = mongo_helper.users.query().filter(average_stars__gt = 2).filter(votes__funny__gt = 2).count()
-    print(mongo_helper.users.execute_query(query))
+    query = mongo_helper.users.query().filter(average_stars__gt = 2).filter(votes__funny__gt = 2)
+    print(mongo_helper.users.execute_query(query).dataframe())
