@@ -7,13 +7,15 @@ class Query:
     def __init__(self):
         self._query_dict = {}
         self._count = False
+        self._projection = {}
 
     def _is_op(self, param):
         ops = ["lt"
                "gt",
                "lte",
                "gte",
-               "ne"]
+               "ne",
+               "exists"]
 
         if (any(param in i for i in ops)):
             return True
@@ -46,6 +48,10 @@ class Query:
 
         return self
 
+    def projection(self, **kwargs):
+        self._projection = kwargs
+        return self
+
     def count(self):
         self._count = True
         return self
@@ -55,6 +61,9 @@ class Query:
 
     def get_query(self):
         return self._query_dict
+
+    def get_projection(self):
+        return self._projection
 
     def __str__(self):
         return str(self.query_dict)
@@ -102,7 +111,7 @@ class Collection:
         if (query.is_count()):
             self._count = self.db[self._collection_name].find(query.get_query()).count()
         else:
-            self._cursor = self.db[self._collection_name].find(query.get_query())
+            self._cursor = self.db[self._collection_name].find(query.get_query(), query.get_projection())
 
         return self
 
