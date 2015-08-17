@@ -15,7 +15,8 @@ class Query:
                "lte",
                "gte",
                "ne",
-               "exists"]
+               "exists",
+               "regex"]
 
         if (any(param in i for i in ops)):
             return True
