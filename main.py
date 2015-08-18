@@ -3,36 +3,8 @@ __author__ = 'sarangis'
 from mongodb import *
 import matplotlib.pyplot as plt
 
-def myfunc(object):
-    print(object)
-
-class Combine:
-    def __init__(self, m, n):
-        self.m = m
-        self.n = n
-
-    def __str__(self):
-        return str(self.m) + "," + str(self.n)
-
-class B:
-    def __init__(self, m):
-        self.m = m
-
-    def __str__(self):
-        return str(self.m)
-
-    def __or__(self, other):
-        print("OR method called")
-        return Combine(self.m, other.m)
-
-    def __and__(self, other):
-        print("AND method called")
-        return Combine(self.m, other.m)
-
 def main():
     mongo_helper = MongoDBHelper('yelp')
-    # query = mongo_helper.users.query().filter(average_stars__gt = 2).filter(votes__funny__gt = 2)
-    # print(mongo_helper.users.execute_query(query).dataframe())
     five_star_reviews = mongo_helper.reviews.query().filter(stars = 5).count().execute().get()
 
     four_star_reviews = mongo_helper.reviews.query().filter(stars = 4).count().execute().get()
