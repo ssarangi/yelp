@@ -66,4 +66,6 @@ if __name__ == "__main__":
     # my_query = mongo_helper.reviews.query().filter(Q(stars = 5) | Q(stars=4)).execute().dataframe()
     # four_star_reviews = mongo_helper.reviews.query().filter(stars = 4).count().execute().get()
     # print(my_query)
-    main()
+    text_only = mongo_helper.reviews.query().filter(stars = 4).projection(text=1, _id=0).execute().dataframe()
+    print(text_only)
+    # main()

@@ -105,14 +105,11 @@ class Query(QueryBase):
     def get(self):
         return self._value
 
-    def dataframe(self, no_id=True):
+    def dataframe(self):
         if (self._count == True):
             raise("Dataframe cannot be used with Count method")
         # Expand the cursor and construct the dataframe
         df = pd.DataFrame(list(self._cursor))
-
-        if (no_id):
-            del df['_id']
 
         self._value = df
         return df
