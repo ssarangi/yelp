@@ -3,14 +3,10 @@ __author__ = 'sarangis'
 import pandas as pd
 from pymongo import MongoClient
 
-class Query:
-    def __init__(self, db, collection):
+class QueryBase:
+    _query_dict = {}
+    def __init__(self):
         self._query_dict = {}
-        self._count = False
-        self._projection = {}
-        self._db = db
-        self._collection = collection
-        self._value = None
 
     def _is_op(self, param):
         ops = ["lt"
@@ -32,8 +28,7 @@ class Query:
         params = key.split("__")
         return params
 
-
-    def filter(self, **kwargs):
+    def _parse_query_dict(self, kwargs):
         # Iterate over the kw args and create the search dictionary
         for k,v in kwargs.items():
             # Parse the key and figure out if there is an operation
@@ -50,8 +45,39 @@ class Query:
                last_param = "$" + last_param
                self._query_dict.update({key_str: {last_param: v}})
             else:
-                self._query_dict.update({key_str: v})
+               self._query_dict.update({key_str: v})
 
+        return self._query_dict
+
+# This is basically a QueryNode
+class Q(QueryBase):
+    def __init__(self, **kwargs):
+        QueryBase.__init__(self)
+        self._query_dict = self._parse_query_dict(kwargs)
+
+    def __or__(self, other):
+        self._query_dict = { "$or": [self._query_dict, other._query_dict] }
+        return self
+
+    def __and__(self, other):
+        self._query_dict = { "$and": [self._query_dict, other._query_dict] }
+        return self
+
+class Query(QueryBase):
+    def __init__(self, db, collection):
+        QueryBase.__init__(self)
+        self._cursor = None
+        self._count = False
+        self._projection = {}
+        self._db = db
+        self._collection = collection
+        self._value = None
+
+    def filter(self, *args, **kwargs):
+        if (len(args) == 0):
+            self._parse_query_dict(kwargs)
+        else:
+            self._query_dict = args[0]._query_dict
         return self
 
     def projection(self, **kwargs):
@@ -67,7 +93,7 @@ class Query:
             self._count = self._db[self._collection].find(self._query_dict).count()
             self._value = self._count
         else:
-            if len(self._query._projection) > 0:
+            if len(self._projection) > 0:
                 self._cursor = self._db[self._collection].find(self._query_dict, self._projection)
                 self._value = self._cursor
             else:
@@ -80,6 +106,8 @@ class Query:
         return self._value
 
     def dataframe(self, no_id=True):
+        if (self._count == True):
+            raise("Dataframe cannot be used with Count method")
         # Expand the cursor and construct the dataframe
         df = pd.DataFrame(list(self._cursor))
 

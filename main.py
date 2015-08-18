@@ -49,6 +49,9 @@ def main():
     x = range(N)
     width = 1/1.5
 
+    plt.bar(x, y, width)
+    plt.xticks()
+
     fig = plt.figure()
     ax = plt.subplot(111)
     plt.subplots_adjust(left=0.115, right=0.88)
@@ -58,9 +61,9 @@ def main():
     # fig = plt.gcf()
     plt.show()
 
-
 if __name__ == "__main__":
-    # main()
-    # myfunc((B(3) & B(4)))
-    # print(B(2) & B(4))
+    mongo_helper = MongoDBHelper('yelp')
+    # my_query = mongo_helper.reviews.query().filter(Q(stars = 5) | Q(stars=4)).execute().dataframe()
+    # four_star_reviews = mongo_helper.reviews.query().filter(stars = 4).count().execute().get()
+    # print(my_query)
     main()
