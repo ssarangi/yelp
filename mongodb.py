@@ -124,14 +124,6 @@ class Collection:
         self._cursor = None
         self._count = 0
 
-        find_one = self._db[self._collection_name].find_one()
-
-        if (find_one != None):
-            collection_list = find_one.keys()
-            for collection in collection_list:
-                print("Creating Collection: %s" % parent_name + "." + collection)
-                setattr(self, collection, Collection(self._db, collection, self._collection_name))
-
     def query(self):
         return Query(self._db, self._collection_name)
 
