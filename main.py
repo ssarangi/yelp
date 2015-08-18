@@ -1,7 +1,9 @@
 __author__ = 'sarangis'
 
 from mongodb import *
-import matplotlib.pyplot as plt
+from bokeh.plotting import figure
+from collections import OrderedDict
+from bokeh.charts import Bar, output_file, show
 
 def main():
     mongo_helper = MongoDBHelper('yelp')
@@ -15,23 +17,15 @@ def main():
 
     one_star_reviews = mongo_helper.reviews.query().filter(stars = 1).count().execute().get()
 
-    y = [one_star_reviews, two_star_reviews, three_star_reviews, four_star_reviews, five_star_reviews]
-    N = len(y)
-    # x = ["1 star", "2 star", "3 star", "4 star", "5 star"]
-    x = range(N)
-    width = 1/1.5
+    xyvalues = OrderedDict()
+    xyvalues["xy"] = [one_star_reviews, two_star_reviews, three_star_reviews, four_star_reviews, five_star_reviews]
+    x_labels = ["1 star", "2 star", "3 star", "4 star", "5 star"]
 
-    plt.bar(x, y, width)
-    plt.xticks()
+    bar = Bar(xyvalues, x_labels, title="Review Stars", xlabel="Stars", ylabel="Review")
 
-    fig = plt.figure()
-    ax = plt.subplot(111)
-    plt.subplots_adjust(left=0.115, right=0.88)
-    ax.bar(x, y, width=0.6)
+    output_file("reviews.html")
 
-    # plt.plot(x, y, color="yellow")
-    # fig = plt.gcf()
-    plt.show()
+    show(bar)
 
 if __name__ == "__main__":
     mongo_helper = MongoDBHelper('yelp')
