@@ -72,6 +72,7 @@ class Query(QueryBase):
         self._db = db
         self._collection = collection
         self._value = None
+        self._limit = 0
 
     def filter(self, *args, **kwargs):
         if (len(args) == 0):
@@ -88,16 +89,26 @@ class Query(QueryBase):
         self._count = True
         return self
 
+    def limit(self, limit_val):
+        self._limit = limit_val
+        return self
+
     def execute(self):
         if (self._count):
             self._count = self._db[self._collection].find(self._query_dict).count()
             self._value = self._count
         else:
             if len(self._projection) > 0:
-                self._cursor = self._db[self._collection].find(self._query_dict, self._projection)
+                if (self._limit > 0):
+                    self._cursor = self._db[self._collection].find(self._query_dict, self._projection).limit(self._limit)
+                else:
+                    self._cursor = self._db[self._collection].find(self._query_dict, self._projection)
                 self._value = self._cursor
             else:
-                self._cursor = self._db[self._collection].find(self._query_dict)
+                if (self._limit > 0):
+                    self._cursor = self._db[self._collection].find(self._query_dict).limit(self._limit)
+                else:
+                    self._cursor = self._db[self._collection].find(self._query_dict)
                 self._value = self._cursor
 
         return self

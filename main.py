@@ -4,6 +4,7 @@ from mongodb import *
 from bokeh.plotting import figure
 from collections import OrderedDict
 from bokeh.charts import Bar, output_file, show
+import numpy as np
 
 def main():
     mongo_helper = MongoDBHelper('yelp')
@@ -32,6 +33,20 @@ if __name__ == "__main__":
     # my_query = mongo_helper.reviews.query().filter(Q(stars = 5) | Q(stars=4)).execute().dataframe()
     # four_star_reviews = mongo_helper.reviews.query().filter(stars = 4).count().execute().get()
     # print(my_query)
-    text_only = mongo_helper.reviews.query().filter(stars = 4).projection(text=1, _id=0).execute().dataframe()
-    print(text_only)
+    reviews_txt_df = mongo_helper.reviews.query().filter(stars = 4).projection(text=1, _id=0).execute().dataframe()
+    col = reviews_txt_df["text"]
+
+    txt = ""
+    for line in col:
+        txt += " " + line
+
+    from wordcloud import WordCloud
+    word_cloud = WordCloud().generate(txt)
+    word_cloud.to_file("wordcloud.png")
+    plot = figure(width=1000, height=1000)
+    pix = np.array(word_cloud.to_image())
+    plot.image_rgba(image=[pix], x=[0], y=[0], dw=[10], dh=[10])
+    output_file("wordcloud.html")
+
+    show(plot)
     # main()
