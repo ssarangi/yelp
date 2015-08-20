@@ -83,11 +83,14 @@ def clean_stopwords():
     cleanStopwords = CleanStopwords(stopwords_list)
     cleanStopwords.map(five_star_txt_tokenized)
 
-    new_res = [word.encode("utf-8") for word in cleanStopwords.result]
+    cleaned_txt = [word.encode("utf-8") for word in cleanStopwords.result]
 
-    print(new_res)
+    return cleaned_txt
 
-
+def compute_ngrams(txt):
+    from sklearn.feature_extraction.text import CountVectorizer
+    word_vectorizer = CountVectorizer(ngram_range=(1,3), stop_words='english', analyzer='word')
+    trainset = word_vectorizer.fit_transform(txt)
 
 if __name__ == "__main__":
     # mongo_helper = MongoDBHelper('yelp')
