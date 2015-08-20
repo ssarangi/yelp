@@ -110,7 +110,9 @@ class ParCountVectorizer(ParallelBase):
         bigram_freq = {}
         unigram_freq = {}
 
-        word_list = arg.split(" ")
+        word_list = remove_punct(arg)
+        # Remove the stopwords
+        word_list = [word for word in word_list if word not in stopwords_list]
 
         # Now this is a list of words
         wl1 = word_list[1:]
@@ -192,10 +194,10 @@ if __name__ == "__main__":
     par_count_vec.map(reviews)
 
     for trigram, freq in par_count_vec.trigram_freq.items():
-        print(trigram, freq)
+        print("%s:%d" % ((trigram[0] + " " + trigram[1] + " " + trigram[2]), freq))
 
-    for bigram, freq in par_count_vec.bigram_freq.items():
-        print(bigram, freq)
+    # for bigram, freq in par_count_vec.bigram_freq.items():
+    #     print(bigram, freq)
 
-    for unigram, freq in par_count_vec.unigram_freq.items():
-        print(unigram, freq)
+    # for unigram, freq in par_count_vec.unigram_freq.items():
+    #     print(unigram, freq)

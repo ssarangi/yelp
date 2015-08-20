@@ -150,7 +150,6 @@ class MongoDBHelper:
         collection_list = self.db.collection_names(include_system_collections=False)
 
         for collection in collection_list:
-            print("Creating Collection: %s" % collection)
             setattr(self, collection, Collection(self.db, collection))
 
     def _connect_mongo(self, host, port, username, password, db):
