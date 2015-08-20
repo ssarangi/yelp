@@ -125,6 +125,9 @@ class Query(QueryBase):
         self._value = df
         return df
 
+    def get_cursor(self):
+        return self._cursor
+
     def __str__(self):
         return str(self._query_dict)
 
