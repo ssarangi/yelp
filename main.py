@@ -92,6 +92,64 @@ def compute_ngrams(txt):
     word_vectorizer = CountVectorizer(ngram_range=(1,3), stop_words='english', analyzer='word')
     trainset = word_vectorizer.fit_transform(txt)
 
+
+class ParCountVectorizer(ParallelBase):
+    def __init__(self):
+        self.trigram_freq = {}
+
+    def _increment_count_in_dict(self, dict, key):
+        if (key in dict):
+            dict[key] += 1
+        else:
+            dict[key] = 1
+
+    # arg is a list of words or just a string
+    def runPar(self, arg):
+        # We expect the arg to be a string
+        trigram_freq = {}
+        bigram_freq = {}
+        unigram_freq = {}
+
+        word_list = arg.split(" ")
+
+        # Now this is a list of words
+        wl1 = word_list[1:]
+        wl2 = word_list[2:]
+
+        unigram = word_list
+        zipped_bigram = zip(word_list, wl1)
+        zipped_trigram = zip(word_list, wl1, wl2)
+
+        for item in unigram:
+            self._increment_count_in_dict(unigram_freq, item)
+
+        for item in zipped_bigram:
+            self._increment_count_in_dict(bigram_freq, item)
+
+        for item in zipped_trigram:
+            self._increment_count_in_dict(trigram_freq, item)
+
+        return (unigram_freq, bigram_freq, trigram_freq)
+
+    def runComplete(self, arg):
+        self.trigram_freq = {}
+        self.bigram_freq = {}
+        self.unigram_freq = {}
+
+        for a in arg:
+            unigram_freq = a[0]
+            bigram_freq = a[1]
+            trigram_freq = a[2]
+
+            for k,v in trigram_freq.items():
+                self._increment_count_in_dict(self.trigram_freq, k)
+
+            for k,v in bigram_freq.items():
+                self._increment_count_in_dict(self.bigram_freq, k)
+
+            for k,v in unigram_freq.items():
+                self._increment_count_in_dict(self.unigram_freq, k)
+
 if __name__ == "__main__":
     # mongo_helper = MongoDBHelper('yelp')
     # # my_query = mongo_helper.reviews.query().filter(Q(stars = 5) | Q(stars=4)).execute().dataframe()
@@ -117,4 +175,27 @@ if __name__ == "__main__":
 
     # map_reduce = MapReduce()
     # map_reduce.map(worker, [1,2,3,4,5,6,7,8])
-    clean_stopwords()
+    # clean_stopwords()
+
+    str = "Well, the canonical approach in Python is to not check the type at all (unless you're debugging)."
+    # str_tokenized = remove_punct(str)
+
+    mongo_helper = MongoDBHelper('yelp')
+
+    reviews = []
+    five_star_review_txt_cursor = mongo_helper.reviews.query().filter(stars = 5).projection(text=1, _id=0).limit(18000).execute().get_cursor() #.dataframe()
+
+    for doc in five_star_review_txt_cursor:
+        reviews.append(doc["text"])
+
+    par_count_vec = ParCountVectorizer()
+    par_count_vec.map(reviews)
+
+    for trigram, freq in par_count_vec.trigram_freq.items():
+        print(trigram, freq)
+
+    for bigram, freq in par_count_vec.bigram_freq.items():
+        print(bigram, freq)
+
+    for unigram, freq in par_count_vec.unigram_freq.items():
+        print(unigram, freq)
