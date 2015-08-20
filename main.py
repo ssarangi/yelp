@@ -193,8 +193,14 @@ if __name__ == "__main__":
     par_count_vec = ParCountVectorizer()
     par_count_vec.map(reviews)
 
-    for trigram, freq in par_count_vec.trigram_freq.items():
-        print("%s:%d" % ((trigram[0] + " " + trigram[1] + " " + trigram[2]), freq))
+    #for trigram, freq in par_count_vec.trigram_freq.items():
+    #    print("%s:%d" % ((trigram[0] + " " + trigram[1] + " " + trigram[2]), freq))
+
+    import operator
+    sorted_trigrams = sorted(par_count_vec.trigram_freq.items(), key=operator.itemgetter(1))
+    top_200 = sorted_trigrams[-200:]
+    for i in top_200:
+        print("%s:%d" % ((i[0][0] + " " + i[0][1] + " " + i[0][2]), i[1]))
 
     # for bigram, freq in par_count_vec.bigram_freq.items():
     #     print(bigram, freq)
