@@ -61,11 +61,6 @@ def use_my_count_vectorizer():
     # for unigram, freq in par_count_vec.unigram_freq.items():
     #     print(unigram, freq)
 
-    from nltk.stem import WordNetLemmatizer
-    wordnet_lemmatizer = WordNetLemmatizer()
-
-    
-
 def generate_word_cloud_from_reviews():
     # Doesn't work on Windows yet
     # mongo_helper = MongoDBHelper('yelp')
@@ -92,28 +87,46 @@ def par_clean_stopwords():
     clean_stopwords()
 
 def create_sklearn_ngrams():
+    from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+    from sklearn.naive_bayes import MultinomialNB
+    from sklearn import metrics
+
     print("Reading Database")
     mongo_helper = MongoDBHelper('yelp')
     five_star_review_txt_cursor = mongo_helper.reviews.query().filter(stars = 5).projection(text=1, _id=0).limit(18000).execute().get_cursor() #.dataframe()
 
+    reviews = []
     for doc in five_star_review_txt_cursor:
-        matrix = compute_sklearn_ngrams(doc['text'].split('\n'))
-        print(matrix.get_feature_names())
+        reviews.append(doc['text'].encode("utf-8"))
 
-    five_star_txt = create_txt_from_cursor(five_star_review_txt_cursor)
-    print("Database Reading finished")
-    for counter, c in enumerate(five_star_txt):
-        print("%d: %s" % (counter, c))
+    reviews = ["test", "train"] * 13500
+    print(reviews)
+    total = len(reviews)
+    training_range = int(total * 0.75)
+    test_range = int(total * 0.25)
+    X_train_txt = (reviews[:training_range])
+    X_test_txt = (reviews[test_range:])
 
-    print(five_star_txt)
-    word_vectorizer = compute_sklearn_ngrams(five_star_txt)
+    print(len(X_train_txt))
 
-    print(type(word_vectorizer.vocabulary))
-    for k, v in word_vectorizer.vocabulary:
-        print(k, v)
+    vectorizer = TfidfVectorizer(min_df=2, ngram_range=(1, 3),  stop_words='english', strip_accents='unicode', norm='l2')
+
+    X_train = vectorizer.fit_transform(X_train_txt)
+    X_test = vectorizer.transform(X_test_txt)
+
+    nb_classifier = MultinomialNB(alpha=1,fit_prior=False).fit(X_train, 5)
+    y_nb_predicted = nb_classifier.predict(X_test)
+
+    print("MODEL: Multinomial Naive Bayes\n")
+
+    print('The precision for this classifier is ' + str(metrics.precision_score(5, y_nb_predicted)))
+    print('The recall for this classifier is ' + str(metrics.recall_score(5, y_nb_predicted)))
+    print('The f1 for this classifier is ' + str(metrics.f1_score(5, y_nb_predicted)))
+    print('The accuracy for this classifier is ' + str(metrics.accuracy_score(5, y_nb_predicted)))
+
 
 if __name__ == "__main__":
-    use_my_count_vectorizer()
+    create_sklearn_ngrams()
 
 
 
