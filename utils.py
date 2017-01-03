@@ -6,13 +6,14 @@ import time
 
 class ProgressBar:
     def __init__(self):
-        pass
+        self.start_time = 0
+        self.stop_time = 0
 
     def start(self):
-        self.start = time.time()
+        self.start_time = time.time()
 
     def stop(self):
-        self.stop = time.time()
+        self.stop_time = time.time()
 
     # Print iterations progress
     def print_progress(self, iteration, total, prefix='', suffix='', decimals=1, bar_length=100, termination_str=""):
@@ -39,7 +40,7 @@ class ProgressBar:
             sys.stdout.write('\r' + ' ' * len(s))
             self.stop()
             if termination_str == "":
-                sys.stdout.write('\rCompleted in %s secs' % (self.stop - self.start))
+                sys.stdout.write('\rCompleted in %s secs' % (self.stop_time - self.start_time))
             sys.stdout.write('\n')
         sys.stdout.flush()
 
