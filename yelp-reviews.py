@@ -25,6 +25,15 @@ class MongoDBConverter:
         dataset_file = Settings.REVIEW_DATASET_FILE
         business_collection = self.db[Settings.BUSINESS_COLLECTION]
 
+        # Find all the businesses and their reviews and add the review_id to a dict.
+        review_id_hashes = set()
+
+        businesses = business_collection.find()
+        for business in businesses:
+            if 'reviews' in business:
+                for review in business['reviews']:
+                    review_id_hashes.add(review['review_id'])
+
         self.progess_bar.start()
         with open(dataset_file, 'r') as dataset:
             count = sum(1 for _ in dataset)
@@ -45,11 +54,10 @@ class MongoDBConverter:
                     assert(business is not None)
 
                     add_review = True
-                    business['reviews'] = business.get('reviews', [])
-                    for review in business['reviews']:
-                        if review['review_id'] == data['review_id']:
-                            add_review = False
+                    if data['review_id'] in review_id_hashes:
+                        add_review = False
 
+                    business['reviews'] = business.get('reviews', [])
                     if add_review:
                         business['reviews'].append(data)
                         business_collection.update_one({'business_id': business_id}, {"$set": business}, upsert=True)
