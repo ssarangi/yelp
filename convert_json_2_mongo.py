@@ -21,7 +21,6 @@ class MongoDBConverter:
     def create_review_db(self):
         print_header("Creating Reviews")
         done = 0
-        start = time.time()
         dataset_file = Settings.REVIEW_DATASET_FILE
         business_collection = self.db[Settings.BUSINESS_COLLECTION]
 
@@ -133,7 +132,6 @@ class MongoDBConverter:
 
                     done += 1
                     self.progess_bar.print_progress(done, count, prefix='Progress:', suffix='Complete')
-                    next(dataset)
 
             user_collection.create_index('user_id')
 
